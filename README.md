@@ -9,7 +9,7 @@ It combines **Node.js microservices**, a **C++ native scheduling engine**, and a
 
 - **Dashboard** →
 
-- <img width="1278" height="661" alt="Image" src="https://github.com/user-attachments/assets/90fcc99a-004d-4765-b072-242c58a3c29d" />
+<img width="1278" height="661" alt="Image" src="https://github.com/user-attachments/assets/90fcc99a-004d-4765-b072-242c58a3c29d" />
 
 - **Analytics** →
 
