@@ -1,4 +1,4 @@
-# 📚 NeuroDeck — Intelligent Spaced Repetition Platform
+# 📚 Cardsy — Intelligent Spaced Repetition Platform
 
 NeuroDeck is a **scalable, production-grade learning platform** built around **spaced repetition, analytics, and gamified practice**.  
 It combines **Node.js microservices**, a **C++ native scheduling engine**, and a **Mongo + PostgreSQL + Redis** data strategy to deliver high performance and deep learning insights.
@@ -9,11 +9,11 @@ It combines **Node.js microservices**, a **C++ native scheduling engine**, and a
 
 > Screenshots are stored in `/screenshots`
 
-- **Dashboard** → `<img width="1278" height="661" alt="Image" src="https://github.com/user-attachments/assets/90fcc99a-004d-4765-b072-242c58a3c29d" />`
-- **Analytics** → `<img width="1280" height="681" alt="Image" src="https://github.com/user-attachments/assets/73194318-e599-4955-97fb-7c50b9d657c1" />`
-- **Decks Page** → `<img width="1280" height="681" alt="Image" src="https://github.com/user-attachments/assets/e2825282-f9a7-4785-9731-1e6f20765526" />`
-- **Flashcard (Question)** → `<img width="895" height="505" alt="Image" src="https://github.com/user-attachments/assets/774e7449-3480-4abb-bc63-37dafcd30cc3" />`
-- **Flashcard (Answer & Evaluation)** → `<img width="883" height="561" alt="Image" src="https://github.com/user-attachments/assets/c9e2d276-27ed-4af4-8235-05fa5193db22" />`
+- **Dashboard** → <img width="1278" height="661" alt="Image" src="https://github.com/user-attachments/assets/90fcc99a-004d-4765-b072-242c58a3c29d" />
+- **Analytics** → <img width="1280" height="681" alt="Image" src="https://github.com/user-attachments/assets/73194318-e599-4955-97fb-7c50b9d657c1" />
+- **Decks Page** → <img width="1280" height="681" alt="Image" src="https://github.com/user-attachments/assets/e2825282-f9a7-4785-9731-1e6f20765526" />
+- **Flashcard (Question)** → <img width="895" height="505" alt="Image" src="https://github.com/user-attachments/assets/774e7449-3480-4abb-bc63-37dafcd30cc3" />
+- **Flashcard (Answer & Evaluation)** → <img width="883" height="561" alt="Image" src="https://github.com/user-attachments/assets/c9e2d276-27ed-4af4-8235-05fa5193db22" />
 
 ---
 
@@ -143,26 +143,6 @@ const ranked = srs.rankCards(payload);
 
 ---
 
-## 🚀 Deployment
-
-**LayerTool**
-- Containers  
-- Docker  
-
-**CI/CD**
-- GitHub Actions  
-
-**Backend**
-- Render / Fly.io  
-
-**Databases**
-- Mongo Atlas, Neon, Upstash  
-
-**Frontend**
-- Vercel  
-
----
-
 ## 🔍 Recruiter Highlights
 
 - Hybrid Node.js + C++ backend  
@@ -172,11 +152,5 @@ const ranked = srs.rankCards(payload);
 - Real-time gamification & analytics  
 
 ---
-
-## 📌 Status
-
-🟢 Active development  
-📈 Horizontally scalable  
-🧪 Performance-tested  
 
 **Built for learning. Engineered for scale.**
