@@ -37,13 +37,12 @@ It combines **Node.js microservices**, a **C++ native scheduling engine**, and a
 |------|---------------|------|
 | Auth | JWT, OAuth, sessions | Node.js + PostgreSQL |
 | Deck | Deck & card CRUD | Node.js + MongoDB |
-| Practice Engine | Card ranking & SRS | Node.js + C++ Addon |
+| Practice Engine | Card ranking & SRS | Node.js + C++ + C++ Addon |
 | Gamification | XP, streaks, leaderboards | Node.js + Redis |
 | Analytics | Aggregations & insights | Node.js + PostgreSQL (TimescaleDB) |
 
 **Communication**
 - gRPC / REST via API Gateway  
-- Async processing via BullMQ  
 - Realtime updates via WebSockets  
 
 **Frontend**
