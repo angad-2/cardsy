@@ -1,6 +1,6 @@
 # 📚 Cardsy — Intelligent Spaced Repetition Platform
 
-NeuroDeck is a **scalable, production-grade learning platform** built around **spaced repetition, analytics, and gamified practice**.  
+Cardsy is a **scalable, production-grade learning platform** built around **spaced repetition, analytics, and gamified practice**.  
 It combines **Node.js microservices**, a **C++ native scheduling engine**, and a **Mongo + PostgreSQL + Redis** data strategy to deliver high performance and deep learning insights.
 
 ---
@@ -34,8 +34,7 @@ It combines **Node.js microservices**, a **C++ native scheduling engine**, and a
 
 **Frontend**
 - React + Tailwind CSS  
-- Recharts / Chart.js  
-- Framer Motion  
+- Recharts / Chart.js   
 
 ---
 
