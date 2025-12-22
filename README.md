@@ -7,8 +7,6 @@ It combines **Node.js microservices**, a **C++ native scheduling engine**, and a
 
 ## 🖥️ Screenshots (Key Pages)
 
-> Screenshots are stored in `/screenshots`
-
 - **Dashboard** → <img width="1278" height="661" alt="Image" src="https://github.com/user-attachments/assets/90fcc99a-004d-4765-b072-242c58a3c29d" />
 - **Analytics** → <img width="1280" height="681" alt="Image" src="https://github.com/user-attachments/assets/73194318-e599-4955-97fb-7c50b9d657c1" />
 - **Decks Page** → <img width="1280" height="681" alt="Image" src="https://github.com/user-attachments/assets/e2825282-f9a7-4785-9731-1e6f20765526" />
