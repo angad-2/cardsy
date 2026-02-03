@@ -6,14 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Mail, Lock, Eye, EyeOff } from "lucide-react";
-import axios from "axios";
 import { toast } from "sonner";
 
 const Auth = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   // Login form state
   const [loginForm, setLoginForm] = useState({
@@ -30,53 +28,22 @@ const Auth = () => {
     confirmPassword: ""
   });
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', {
-        identifier: loginForm.identifier,
-        password: loginForm.password
-      });
-
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data));
-      toast.success("Login successful!");
-      navigate("/");
-    } catch (error: any) {
-      console.error("Login error:", error);
-      toast.error(error.response?.data?.message || "Login failed");
-    } finally {
-      setLoading(false);
-    }
+    console.log("Login (Static):", loginForm);
+    toast.success("Login successful! (Static)");
+    navigate("/");
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
     if (signupForm.password !== signupForm.confirmPassword) {
       toast.error("Passwords do not match");
       return;
     }
-
-    setLoading(true);
-    try {
-      const response = await axios.post('http://localhost:5000/api/auth/signup', {
-        name: signupForm.name,
-        username: signupForm.username,
-        email: signupForm.email,
-        password: signupForm.password
-      });
-
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data));
-      toast.success("Signup successful!");
-      navigate("/");
-    } catch (error: any) {
-      console.error("Signup error:", error);
-      toast.error(error.response?.data?.message || "Signup failed");
-    } finally {
-      setLoading(false);
-    }
+    console.log("Signup (Static):", signupForm);
+    toast.success("Signup successful! (Static)");
+    navigate("/");
   };
 
   return (
@@ -114,7 +81,6 @@ const Auth = () => {
                         onChange={(e) => setLoginForm({ ...loginForm, identifier: e.target.value })}
                         className="pl-10"
                         required
-                        disabled={loading}
                       />
                     </div>
                   </div>
@@ -131,7 +97,6 @@ const Auth = () => {
                         onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
                         className="pl-10 pr-10"
                         required
-                        disabled={loading}
                       />
                       <button
                         type="button"
@@ -143,8 +108,8 @@ const Auth = () => {
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={loading}>
-                    {loading ? "Logging in..." : "Login"}
+                  <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+                    Login
                   </Button>
                 </form>
               </TabsContent>
@@ -164,7 +129,6 @@ const Auth = () => {
                         onChange={(e) => setSignupForm({ ...signupForm, name: e.target.value })}
                         className="pl-10"
                         required
-                        disabled={loading}
                       />
                     </div>
                   </div>
@@ -181,7 +145,6 @@ const Auth = () => {
                         onChange={(e) => setSignupForm({ ...signupForm, username: e.target.value })}
                         className="pl-10"
                         required
-                        disabled={loading}
                       />
                     </div>
                   </div>
@@ -198,7 +161,6 @@ const Auth = () => {
                         onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
                         className="pl-10"
                         required
-                        disabled={loading}
                       />
                     </div>
                   </div>
@@ -215,7 +177,6 @@ const Auth = () => {
                         onChange={(e) => setSignupForm({ ...signupForm, password: e.target.value })}
                         className="pl-10 pr-10"
                         required
-                        disabled={loading}
                       />
                       <button
                         type="button"
@@ -239,7 +200,6 @@ const Auth = () => {
                         onChange={(e) => setSignupForm({ ...signupForm, confirmPassword: e.target.value })}
                         className="pl-10 pr-10"
                         required
-                        disabled={loading}
                       />
                       <button
                         type="button"
@@ -251,8 +211,8 @@ const Auth = () => {
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={loading}>
-                    {loading ? "Signing up..." : "Sign Up"}
+                  <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+                    Sign Up
                   </Button>
                 </form>
               </TabsContent>
