@@ -6,19 +6,21 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import axios from "axios";
+import { toast } from "sonner";
 
 const Auth = () => {
   const navigate = useNavigate();
-  const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
+  const [loading, setLoading] = useState(false);
+
   // Login form state
   const [loginForm, setLoginForm] = useState({
     identifier: "", // username or email
     password: ""
   });
-  
+
   // Signup form state
   const [signupForm, setSignupForm] = useState({
     name: "",
@@ -28,25 +30,53 @@ const Auth = () => {
     confirmPassword: ""
   });
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log("Login:", loginForm);
-    // Navigate to dashboard after successful login
-    navigate("/");
+    setLoading(true);
+    try {
+      const response = await axios.post('http://localhost:5000/api/auth/login', {
+        identifier: loginForm.identifier,
+        password: loginForm.password
+      });
+
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data));
+      toast.success("Login successful!");
+      navigate("/");
+    } catch (error: any) {
+      console.error("Login error:", error);
+      toast.error(error.response?.data?.message || "Login failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Validate passwords match
     if (signupForm.password !== signupForm.confirmPassword) {
-      alert("Passwords do not match");
+      toast.error("Passwords do not match");
       return;
     }
-    // Handle signup logic here
-    console.log("Signup:", signupForm);
-    // Navigate to dashboard after successful signup
-    navigate("/");
+
+    setLoading(true);
+    try {
+      const response = await axios.post('http://localhost:5000/api/auth/signup', {
+        name: signupForm.name,
+        username: signupForm.username,
+        email: signupForm.email,
+        password: signupForm.password
+      });
+
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data));
+      toast.success("Signup successful!");
+      navigate("/");
+    } catch (error: any) {
+      console.error("Signup error:", error);
+      toast.error(error.response?.data?.message || "Signup failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -54,7 +84,7 @@ const Auth = () => {
       <div className="w-full max-w-md">
         {/* Logo/Title */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-primary mb-2">Carsdy</h1>
+          <h1 className="text-4xl font-bold text-primary mb-2">Cardsy</h1>
           <p className="text-muted-foreground">Master any subject with intelligent flashcards</p>
         </div>
 
@@ -84,6 +114,7 @@ const Auth = () => {
                         onChange={(e) => setLoginForm({ ...loginForm, identifier: e.target.value })}
                         className="pl-10"
                         required
+                        disabled={loading}
                       />
                     </div>
                   </div>
@@ -100,6 +131,7 @@ const Auth = () => {
                         onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
                         className="pl-10 pr-10"
                         required
+                        disabled={loading}
                       />
                       <button
                         type="button"
@@ -111,8 +143,8 @@ const Auth = () => {
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                    Login
+                  <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={loading}>
+                    {loading ? "Logging in..." : "Login"}
                   </Button>
                 </form>
               </TabsContent>
@@ -132,6 +164,7 @@ const Auth = () => {
                         onChange={(e) => setSignupForm({ ...signupForm, name: e.target.value })}
                         className="pl-10"
                         required
+                        disabled={loading}
                       />
                     </div>
                   </div>
@@ -148,6 +181,7 @@ const Auth = () => {
                         onChange={(e) => setSignupForm({ ...signupForm, username: e.target.value })}
                         className="pl-10"
                         required
+                        disabled={loading}
                       />
                     </div>
                   </div>
@@ -164,6 +198,7 @@ const Auth = () => {
                         onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
                         className="pl-10"
                         required
+                        disabled={loading}
                       />
                     </div>
                   </div>
@@ -180,6 +215,7 @@ const Auth = () => {
                         onChange={(e) => setSignupForm({ ...signupForm, password: e.target.value })}
                         className="pl-10 pr-10"
                         required
+                        disabled={loading}
                       />
                       <button
                         type="button"
@@ -203,6 +239,7 @@ const Auth = () => {
                         onChange={(e) => setSignupForm({ ...signupForm, confirmPassword: e.target.value })}
                         className="pl-10 pr-10"
                         required
+                        disabled={loading}
                       />
                       <button
                         type="button"
@@ -214,8 +251,8 @@ const Auth = () => {
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                    Sign Up
+                  <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={loading}>
+                    {loading ? "Signing up..." : "Sign Up"}
                   </Button>
                 </form>
               </TabsContent>

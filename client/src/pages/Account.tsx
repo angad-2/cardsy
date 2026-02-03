@@ -6,13 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { User, Mail, Shield, Bell, Palette, Trophy } from "lucide-react"; 
+import { User, Mail, Shield, Bell, Palette, Trophy } from "lucide-react";
 
-const Account = () => { 
+const Account = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
+
       <div className="max-w-4xl mx-auto p-6 space-y-8">
         <header>
           <h1 className="text-4xl font-bold text-foreground mb-2">
@@ -59,9 +59,9 @@ const Account = () => {
 
             <div className="space-y-2">
               <Label htmlFor="bio">Bio</Label>
-              <Textarea 
-                id="bio" 
-                placeholder="Tell us about yourself..." 
+              <Textarea
+                id="bio"
+                placeholder="Tell us about yourself..."
                 className="min-h-[100px]"
                 defaultValue="Passionate learner trying to master flashcards!"
               />
