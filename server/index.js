@@ -1,11 +1,13 @@
 import express from "express";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
+import { connectPostgres } from "./config/postgresDb.js";
 import cors from "cors"
 import api from "./routes/api.js";
 
 dotenv.config();
 connectDB();
+connectPostgres();
 
 const app = express();
 app.use(express.json());
