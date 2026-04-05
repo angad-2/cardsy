@@ -18,5 +18,5 @@ const connectPostgres = async () => {
     process.exit(1);
   }
 };
-
+// export
 export { pgPool, connectPostgres };
