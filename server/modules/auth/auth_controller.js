@@ -6,8 +6,8 @@ class AuthController {
    */
   async login(req, res, next) {
     try {
-      const { email, password } = req.body;
-      const result = await authService.login(email, password);
+      const { identifier, password } = req.body;
+      const result = await authService.login(identifier, password);
 
       return res.status(200).json({
         status: 'success',
@@ -15,8 +15,7 @@ class AuthController {
         data: result
       });
     } catch (error) {
-      // Pass authentication failure errors back as 401 Unauthorized
-      if (error.message === 'Invalid email or password') {
+      if (error.message === 'Invalid username, email or password') {
         return res.status(401).json({
           status: 'fail',
           message: error.message
@@ -27,20 +26,23 @@ class AuthController {
   }
 
   /**
-   * Handle user registration request (optional/helper)
+   * Handle user registration request
    */
   async register(req, res, next) {
     try {
-      const { email, password, first_name, last_name } = req.body;
-      const user = await authService.register({ email, password, first_name, last_name });
+      const { email, username, password, full_name } = req.body;
+      const result = await authService.register({ email, username, password, full_name });
 
       return res.status(201).json({
         status: 'success',
         message: 'User registered successfully',
-        data: { user }
+        data: result
       });
     } catch (error) {
-      if (error.message === 'Email is already registered') {
+      if (
+        error.message === 'Email is already registered' ||
+        error.message === 'Username is already taken'
+      ) {
         return res.status(409).json({
           status: 'fail',
           message: error.message

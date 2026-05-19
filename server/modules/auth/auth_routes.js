@@ -1,13 +1,13 @@
 const express = require('express');
 const authController = require('./auth_controller');
-const { validateLogin } = require('./auth_validation');
+const { validateLogin, validateRegister } = require('./auth_validation');
 const { protect } = require('./auth_middleware');
 
 const router = express.Router();
 
 // Public routes
 router.post('/login', validateLogin, (req, res, next) => authController.login(req, res, next));
-router.post('/register', (req, res, next) => authController.register(req, res, next));
+router.post('/register', validateRegister, (req, res, next) => authController.register(req, res, next));
 
 // Protected route to test JWT authenticator
 router.get('/me', protect, (req, res) => {
