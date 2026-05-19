@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
+require('../config/env');
 
 const app = express();
 
@@ -20,6 +20,11 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+// Authentication Routes
+const authRoutes = require('../modules/auth/auth_routes');
+app.use('/api/auth', authRoutes);
+
 
 // 404 Handler
 app.use((req, res, next) => {
