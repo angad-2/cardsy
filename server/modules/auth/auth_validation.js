@@ -27,7 +27,9 @@ const validateLogin = (req, res, next) => {
  * Validate register request body
  */
 const validateRegister = (req, res, next) => {
-  const { full_name, username, email, password } = req.body;
+  const { username, email, password } = req.body;
+  // Frontend sends `name`; accept either `name` or `full_name`.
+  const full_name = req.body.full_name || req.body.name;
   const errors = {};
 
   if (!full_name || full_name.trim() === '') {

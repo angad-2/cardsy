@@ -1,0 +1,12 @@
+# Node
+node_modules
+
+# Compiled C++ addon artifacts (rebuild with `npm run build-engine`)
+engine/build
+
+# Prisma generated client
+node_modules/.prisma
+
+# Env
+.env
+*.log

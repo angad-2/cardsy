@@ -1,9 +1,18 @@
-import { Link, useLocation } from "react-router-dom";
-import { Home, BookOpen, BarChart3, Trophy, Bell, User } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Home, BookOpen, BarChart3, Trophy, Bell, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { clearToken } from "@/lib/api";
+import { toast } from "sonner";
 
 export const Navigation = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    clearToken();
+    toast.success("Logged out");
+    navigate("/auth");
+  };
 
   const navItems = [
     { path: "/", icon: Home, label: "Dashboard" },
@@ -54,6 +63,14 @@ export const Navigation = () => {
                 </AvatarFallback>
               </Avatar>
             </Link>
+
+            <button
+              onClick={handleLogout}
+              title="Log out"
+              className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </div>

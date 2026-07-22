@@ -13,8 +13,12 @@ import DeckManagement from "./pages/DeckManagement";
 import UserProfile from "./pages/UserProfile";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
+
+// Wrap a page so it requires a logged-in user.
+const guard = (el: JSX.Element) => <ProtectedRoute>{el}</ProtectedRoute>;
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -24,14 +28,14 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/auth" element={<Auth />} />
-          <Route path="/" element={<Index />} />
-          <Route path="/decks" element={<Decks />} />
-          <Route path="/deck/:deckId" element={<DeckManagement />} />
-          <Route path="/user/:userId" element={<UserProfile />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/social" element={<Social />} />
-          <Route path="/account" element={<Account />} />
-          <Route path="/practice" element={<Practice />} />
+          <Route path="/" element={guard(<Index />)} />
+          <Route path="/decks" element={guard(<Decks />)} />
+          <Route path="/deck/:deckId" element={guard(<DeckManagement />)} />
+          <Route path="/user/:userId" element={guard(<UserProfile />)} />
+          <Route path="/analytics" element={guard(<Analytics />)} />
+          <Route path="/social" element={guard(<Social />)} />
+          <Route path="/account" element={guard(<Account />)} />
+          <Route path="/practice" element={guard(<Practice />)} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

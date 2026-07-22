@@ -7,7 +7,7 @@ interface LeaderboardEntry {
   xp: number;
   accuracy: number;
   avatar?: string;
-  id?: number;
+  id?: string | number;
 }
 
 interface LeaderboardProps {

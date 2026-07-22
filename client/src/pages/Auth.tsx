@@ -7,11 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
+import api, { setToken, errMessage, unwrap } from "@/lib/api";
 
 const Auth = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // Login form state
   const [loginForm, setLoginForm] = useState({
@@ -28,22 +30,40 @@ const Auth = () => {
     confirmPassword: ""
   });
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Login (Static):", loginForm);
-    toast.success("Login successful! (Static)");
-    navigate("/");
+    setLoading(true);
+    try {
+      const data = unwrap(await api.post("/auth/login", loginForm));
+      setToken(data.token);
+      toast.success(`Welcome back, ${data.user.full_name || data.user.username}!`);
+      navigate("/");
+    } catch (err) {
+      toast.error(errMessage(err, "Login failed"));
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (signupForm.password !== signupForm.confirmPassword) {
       toast.error("Passwords do not match");
       return;
     }
-    console.log("Signup (Static):", signupForm);
-    toast.success("Signup successful! (Static)");
-    navigate("/");
+    setLoading(true);
+    try {
+      // Backend expects { name, username, email, password }.
+      const { confirmPassword, ...payload } = signupForm;
+      const data = unwrap(await api.post("/auth/register", payload));
+      setToken(data.token);
+      toast.success("Account created!");
+      navigate("/");
+    } catch (err) {
+      toast.error(errMessage(err, "Signup failed"));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -108,8 +128,8 @@ const Auth = () => {
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                    Login
+                  <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+                    {loading ? "Logging in..." : "Login"}
                   </Button>
                 </form>
               </TabsContent>
@@ -211,8 +231,8 @@ const Auth = () => {
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                    Sign Up
+                  <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+                    {loading ? "Creating account..." : "Sign Up"}
                   </Button>
                 </form>
               </TabsContent>

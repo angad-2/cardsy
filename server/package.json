@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node src/server.js",
     "start": "node src/server.js",
-    "build-engine": "node-gyp rebuild",
+    "build-engine": "node-gyp rebuild -C engine",
+    "seed": "node prisma/seed_achievements.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -21,7 +22,7 @@
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.19.2",
+    "node-addon-api": "^8.0.0",
     "node-gyp": "^10.2.0",
     "pg": "^8.20.0"
   },

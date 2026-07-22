@@ -6,14 +6,269 @@ datasource db {
   provider = "postgresql"
 }
 
+// ---------- USER ----------
+// One row per account. Holds profile + gamification summary.
 model User {
   id         String   @id @default(uuid())
   full_name  String
   username   String   @unique
   email      String   @unique
   password   String
+  avatar_url String?
+  bio        String?
+
+  // gamification
+  level          Int @default(1)
+  xp             Int @default(0) // lifetime total XP
+  streak         Int @default(0) // current daily streak
+  longest_streak Int @default(0)
+
+  // activity / streak tracking
+  last_active_date  DateTime?
+  total_active_days Int       @default(0)
+
+  // analytics summary (denormalised for fast dashboard reads)
+  avg_accuracy         Float @default(0)
+  total_cards_reviewed Int   @default(0)
+  total_cards_mastered Int   @default(0)
+
+  // notification preferences
+  email_notifications Boolean @default(true)
+  streak_alerts       Boolean @default(true)
+  leaderboard_updates Boolean @default(false)
+
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
+  // relations
+  decks           Deck[]             @relation("DeckOwner")
+  memberships     DeckMember[]
+  cards           Card[]
+  cardProgress    UserCardProgress[]
+  deckProgress    UserDeckProgress[]
+  achievements    UserAchievement[]
+  dailyActivity   DailyActivity[]
+  sentInvites     DeckInvite[]       @relation("InviteFrom")
+  receivedInvites DeckInvite[]       @relation("InviteTo")
+
   @@map("users")
+}
+
+// ---------- DECK ----------
+model Deck {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  category    String   @default("General")
+  created_by  String
+  is_public   Boolean  @default(false)
+  tags        String[] @default([])
+
+  // metadata (denormalised aggregates)
+  total_cards  Int   @default(0)
+  avg_accuracy Float @default(0)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  owner        User               @relation("DeckOwner", fields: [created_by], references: [id], onDelete: Cascade)
+  cards        Card[]
+  members      DeckMember[]
+  invites      DeckInvite[]
+  cardProgress UserCardProgress[]
+  deckProgress UserDeckProgress[]
+
+  @@index([created_by])
+  @@index([category])
+  @@map("decks")
+}
+
+// ---------- DECK MEMBER ----------
+// Links a user to a deck they can access (owner, collaborator, or shared copy).
+model DeckMember {
+  id      String @id @default(uuid())
+  deck_id String
+  user_id String
+  role    String @default("collaborator") // owner | collaborator | viewer
+
+  created_at DateTime @default(now())
+
+  deck Deck @relation(fields: [deck_id], references: [id], onDelete: Cascade)
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([deck_id, user_id])
+  @@index([user_id])
+  @@map("deck_members")
+}
+
+// ---------- DECK INVITE ----------
+// A pending share/collaboration request between two users.
+model DeckInvite {
+  id      String @id @default(uuid())
+  deck_id String
+  from_id String
+  to_id   String
+  role    String @default("viewer") // access granted once accepted
+  status  String @default("pending") // pending | accepted | declined
+
+  created_at DateTime @default(now())
+
+  deck Deck @relation(fields: [deck_id], references: [id], onDelete: Cascade)
+  from User @relation("InviteFrom", fields: [from_id], references: [id], onDelete: Cascade)
+  to   User @relation("InviteTo", fields: [to_id], references: [id], onDelete: Cascade)
+
+  @@index([to_id, status])
+  @@map("deck_invites")
+}
+
+// ---------- CARD ----------
+model Card {
+  id       String   @id @default(uuid())
+  deck_id  String
+  question String
+  answer   String
+  tags     String[] @default([])
+
+  // "para" = free text answer, "mcq" = multiple choice
+  type    String   @default("para")
+  options String[] @default([])
+
+  // backend-computed difficulty from aggregate performance
+  difficulty String @default("medium") // easy | medium | hard
+
+  created_by String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  deck     Deck               @relation(fields: [deck_id], references: [id], onDelete: Cascade)
+  creator  User               @relation(fields: [created_by], references: [id], onDelete: Cascade)
+  progress UserCardProgress[]
+
+  @@index([deck_id])
+  @@map("cards")
+}
+
+// ---------- USER CARD PROGRESS ----------
+// Per-user spaced-repetition state for a single card (SM-2 fields).
+model UserCardProgress {
+  id      String @id @default(uuid())
+  user_id String
+  card_id String
+  deck_id String
+
+  // spaced repetition
+  ease_factor      Float     @default(2.5)
+  interval         Float     @default(0) // days until next review
+  repetition_count Int       @default(0)
+  last_reviewed_at DateTime?
+  next_review_at   DateTime?
+
+  // performance
+  difficulty         String @default("medium") // easy | medium | hard
+  last_quality       Int    @default(0) // 0-5 rating of last attempt
+  total_correct      Int    @default(0)
+  total_incorrect    Int    @default(0)
+  avg_response_time  Float  @default(0) // seconds
+  last_response_time Float  @default(0)
+
+  // memory model
+  is_mastered        Boolean @default(false)
+  stability_score    Float   @default(0)
+  recall_probability Float   @default(1)
+  decay_rate         Float   @default(0.02)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  card Card @relation(fields: [card_id], references: [id], onDelete: Cascade)
+  deck Deck @relation(fields: [deck_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, card_id])
+  @@index([user_id, deck_id])
+  @@index([user_id, next_review_at])
+  @@map("user_card_progress")
+}
+
+// ---------- USER DECK PROGRESS ----------
+// Per-user rolled-up stats for a deck (drives dashboards & deck leaderboards).
+model UserDeckProgress {
+  id      String @id @default(uuid())
+  user_id String
+  deck_id String
+
+  reviewed_cards  Int   @default(0)
+  total_cards     Int   @default(0)
+  accuracy_rate   Float @default(0)
+  avg_ease_factor Float @default(2.5)
+  avg_interval    Float @default(0)
+
+  // gamification
+  xp_earned         Int       @default(0)
+  sessions_count    Int       @default(0)
+  last_practiced_at DateTime?
+  cards_due_today   Int       @default(0)
+
+  // analytics
+  hardest_tags  String[] @default([])
+  mastery_level String   @default("beginner") // beginner | intermediate | mastered
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  deck Deck @relation(fields: [deck_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, deck_id])
+  @@index([deck_id])
+  @@map("user_deck_progress")
+}
+
+// ---------- ACHIEVEMENT (catalogue) ----------
+model Achievement {
+  id          String @id @default(uuid())
+  key         String @unique // stable code, e.g. "streak_30"
+  title       String
+  description String
+  icon        String // icon key the frontend maps to a JSX icon
+  rarity      String @default("common") // common | rare | epic | legendary
+
+  // unlock rule, e.g. type="streak", value=30
+  criteria_type  String
+  criteria_value Int
+
+  users UserAchievement[]
+
+  @@map("achievements")
+}
+
+// ---------- USER ACHIEVEMENT (earned) ----------
+model UserAchievement {
+  id             String   @id @default(uuid())
+  user_id        String
+  achievement_id String
+  earned_at      DateTime @default(now())
+
+  user        User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievement_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, achievement_id])
+  @@map("user_achievements")
+}
+
+// ---------- DAILY ACTIVITY ----------
+// One row per user per day, powering the 365-day heatmap and streaks.
+model DailyActivity {
+  id             String   @id @default(uuid())
+  user_id        String
+  date           DateTime @db.Date
+  cards_reviewed Int      @default(0)
+  accuracy       Float    @default(0)
+  xp_gained      Int      @default(0)
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, date])
+  @@index([user_id])
+  @@map("daily_activity")
 }

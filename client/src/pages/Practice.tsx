@@ -1,76 +1,119 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FlashCard } from "@/components/FlashCard";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Trophy } from "lucide-react";
 import { toast } from "sonner";
+import api, { unwrap, errMessage } from "@/lib/api";
 
-const SAMPLE_CARDS = [
-  {
-    id: 1,
-    question: "What is the capital of France?",
-    answer: "Paris - the City of Light, known for the Eiffel Tower and rich cultural heritage.",
-  },
-  {
-    id: 2,
-    question: "Who wrote 'Romeo and Juliet'?",
-    answer: "William Shakespeare, the renowned English playwright and poet from the 16th century.",
-  },
-  {
-    id: 3,
-    question: "What is the chemical symbol for gold?",
-    answer: "Au - derived from the Latin word 'aurum', meaning gold.",
-  },
-  {
-    id: 4,
-    question: "What is photosynthesis?",
-    answer: "The process by which plants convert sunlight, water, and CO₂ into glucose and oxygen.",
-  },
-  {
-    id: 5,
-    question: "When did World War II end?",
-    answer: "1945 - marked by the surrender of Japan after the atomic bombings of Hiroshima and Nagasaki.",
-  },
-];
+type Level = "incorrect" | "partial" | "correct";
 
 const Practice = () => {
   const navigate = useNavigate();
-  const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const [results, setResults] = useState<("incorrect" | "partial" | "correct")[]>([]);
-  const [sessionComplete, setSessionComplete] = useState(false);
+  const queryClient = useQueryClient();
+  const [params] = useSearchParams();
+  const deckId = params.get("deckId");
+  const mode = params.get("mode") || "regular";
 
-  const currentCard = SAMPLE_CARDS[currentCardIndex];
-  const progress = ((currentCardIndex + 1) / SAMPLE_CARDS.length) * 100;
+  const [index, setIndex] = useState(0);
+  const [results, setResults] = useState<Level[]>([]);
+  const [xpEarned, setXpEarned] = useState(0);
+  const [complete, setComplete] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const cardStart = useRef(Date.now());
 
-  const handleFeedback = (level: "incorrect" | "partial" | "correct") => {
-    const newResults = [...results, level];
-    setResults(newResults);
+  // Ask the backend (C++ engine) for a ranked set of cards to practise.
+  const { data: session, isLoading, isError, error } = useQuery({
+    queryKey: ["session", deckId, mode],
+    queryFn: async () => unwrap(await api.post("/sessions/start", { deckId, mode })),
+    enabled: !!deckId,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
 
-    if (currentCardIndex < SAMPLE_CARDS.length - 1) {
-      setCurrentCardIndex(currentCardIndex + 1);
-    } else {
-      setSessionComplete(true);
-      
-      const correct = newResults.filter(r => r === "correct").length;
-      const xpEarned = correct * 10;
-      
-      toast.success(`Session Complete! +${xpEarned} XP earned`, {
-        description: `${correct}/${SAMPLE_CARDS.length} cards mastered`,
-      });
+  const cards = session?.cards || [];
+
+  // Reset the response timer whenever a new card appears.
+  useEffect(() => { cardStart.current = Date.now(); }, [index]);
+
+  const finishSession = async (finalResults: Level[], finalXp: number) => {
+    try {
+      const res = unwrap(await api.post("/sessions/finish", { deckId, xpEarned: finalXp }));
+      if (res.newAchievements?.length) {
+        res.newAchievements.forEach((a: any) => toast.success(`🏅 Badge unlocked: ${a.name}`));
+      }
+    } catch (e) {
+      // Non-fatal: still show the summary.
+      toast.error(errMessage(e, "Could not save session summary"));
     }
+    // Refresh dashboard/analytics next time they're viewed.
+    queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    setComplete(true);
   };
 
-  const handleBackToDashboard = () => {
-    navigate("/");
+  const handleFeedback = async (level: Level) => {
+    if (submitting) return;
+    setSubmitting(true);
+    const card = cards[index];
+    const responseTime = (Date.now() - cardStart.current) / 1000;
+    let gained = 0;
+    try {
+      const res = unwrap(await api.post("/sessions/review", { deckId, cardId: card.id, result: level, responseTime }));
+      gained = res.xpGained || 0;
+    } catch (e) {
+      toast.error(errMessage(e, "Could not record answer"));
+    }
+
+    const newResults = [...results, level];
+    const newXp = xpEarned + gained;
+    setResults(newResults);
+    setXpEarned(newXp);
+
+    if (index < cards.length - 1) {
+      setIndex(index + 1);
+    } else {
+      await finishSession(newResults, newXp);
+    }
+    setSubmitting(false);
   };
 
-  if (sessionComplete) {
-    const correct = results.filter(r => r === "correct").length;
-    const partial = results.filter(r => r === "partial").length;
-    const incorrect = results.filter(r => r === "incorrect").length;
-    const accuracy = Math.round((correct / SAMPLE_CARDS.length) * 100);
-    const xpEarned = correct * 10;
+  // No deck chosen.
+  if (!deckId) {
+    return (
+      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <p className="text-muted-foreground">No deck selected for practice.</p>
+          <Button onClick={() => navigate("/decks")} className="bg-primary text-primary-foreground hover:bg-primary/90">
+            Choose a deck
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return <div className="min-h-screen bg-background p-6 flex items-center justify-center text-muted-foreground">Preparing your session…</div>;
+  }
+
+  if (isError || cards.length === 0) {
+    return (
+      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <p className="text-muted-foreground">{isError ? errMessage(error, "Could not start session") : "This deck has no cards to practise."}</p>
+          <Button onClick={() => navigate(-1)} variant="outline" className="border-border">Go back</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Completion summary.
+  if (complete) {
+    const correct = results.filter((r) => r === "correct").length;
+    const partial = results.filter((r) => r === "partial").length;
+    const incorrect = results.filter((r) => r === "incorrect").length;
+    const accuracy = Math.round((correct / results.length) * 100);
 
     return (
       <div className="min-h-screen bg-background p-6 flex items-center justify-center">
@@ -80,7 +123,7 @@ const Practice = () => {
               <Trophy className="w-16 h-16 text-primary" />
             </div>
           </div>
-          
+
           <div>
             <h1 className="text-4xl font-bold text-foreground mb-2">Session Complete!</h1>
             <p className="text-xl text-primary">+{xpEarned} XP Earned</p>
@@ -106,11 +149,7 @@ const Practice = () => {
             <p className="text-5xl font-bold text-foreground">{accuracy}%</p>
           </div>
 
-          <Button 
-            onClick={handleBackToDashboard}
-            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-            size="lg"
-          >
+          <Button onClick={() => navigate("/")} className="w-full bg-primary text-primary-foreground hover:bg-primary/90" size="lg">
             Back to Dashboard
           </Button>
         </div>
@@ -118,38 +157,29 @@ const Practice = () => {
     );
   }
 
+  const currentCard = cards[index];
+  const progress = ((index + 1) / cards.length) * 100;
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
-          <Button 
-            onClick={handleBackToDashboard}
-            variant="outline"
-            className="border-border"
-          >
+          <Button onClick={() => navigate(-1)} variant="outline" className="border-border">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
-          
+
           <div className="text-center">
-            <p className="text-sm text-muted-foreground">Progress</p>
-            <p className="text-lg font-bold text-foreground">
-              {currentCardIndex + 1} / {SAMPLE_CARDS.length}
-            </p>
+            <p className="text-sm text-muted-foreground">Progress {session.engine === "native" ? "· C++ ranked" : ""}</p>
+            <p className="text-lg font-bold text-foreground">{index + 1} / {cards.length}</p>
           </div>
-          
+
           <div className="w-24" />
         </div>
 
-        <div className="space-y-4">
-          <Progress value={progress} className="h-2" />
-        </div>
+        <Progress value={progress} className="h-2" />
 
-        <FlashCard
-          question={currentCard.question}
-          answer={currentCard.answer}
-          onFeedback={handleFeedback}
-        />
+        <FlashCard key={currentCard.id} question={currentCard.question} answer={currentCard.answer} onFeedback={handleFeedback} />
       </div>
     </div>
   );

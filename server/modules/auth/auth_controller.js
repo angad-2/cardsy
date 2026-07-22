@@ -30,7 +30,9 @@ class AuthController {
    */
   async register(req, res, next) {
     try {
-      const { email, username, password, full_name } = req.body;
+      // Frontend sends `name`; accept either `name` or `full_name`.
+      const { email, username, password } = req.body;
+      const full_name = req.body.full_name || req.body.name;
       const result = await authService.register({ email, username, password, full_name });
 
       return res.status(201).json({
